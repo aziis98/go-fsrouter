@@ -26,6 +26,11 @@ var FiberPreset = Preset{
 	WildcardReplacement:   "*",
 }
 
+var ChiPreset = Preset{
+	NamedParamReplacement: "{$1}",
+	WildcardReplacement:   "*",
+}
+
 type FSRouter struct {
 	Root   string
 	Preset Preset

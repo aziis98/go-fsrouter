@@ -1,59 +1,6 @@
-# FSRouter: Generic File System Router for Go
+# FSRouter
 
-FSRouter is a file system router library for Go, designed to work seamlessly with popular web frameworks like Fiber and Go-Chi. This library simplifies routing by allowing you to structure your routes in a directory hierarchy, making it easy to organize and manage your web application's endpoints.
-
-## Features
-
-- File System-Based Routing
-
-- Compatible with Fiber and Go-Chi
-
-- Dynamic Route Parameters: FSRouter uses the main NextJS conventions and allows you to define dynamic route parameters using placeholders like `[param]` and `[...param]` that gets mapped to the framework syntax (e.g. `:param` and `*` for Fiber)
-
-## Getting Started
-
-To start using FSRouter in your Go project, follow these simple steps:
-
-```bash shell
-go get -v -u github.com/aziis98/go-fsrouter
-```
-
-and import the package with
-
-```go
-import "github.com/aziis98/go-fsrouter"
-```
-
-## Usage (Fiber)
-
-Create a file system router and then use it to load all the routes.
-
-```go
-app := fiber.New()
-
-fsr := fsrouter.New("./pages", fsrouter.FiberPreset)
-engine := fsrouter.NewTemplateCache(true)
-
-routes, err := fsr.LoadRoutes()
-if err != nil {
-    log.Fatal(err)
-}
-
-for _, r := range routes {
-    app.Get(r.Name, func(ctx *fiber.Ctx) error {
-        params := map[string]any{}
-        for _, p := range r.ParamNames {
-            params[p.Name] = ctx.Params(p.Name)
-        }
-
-        return engine.Render(path.Join(fsr.Root, r.Name), ctx, params)
-    })
-}
-```
-
-## Example Directory Structure
-
-Here's an example directory structure for your routes:
+FSRouter is a **file system router library** for Go, designed to easily integrate with most http router libraries. This uses the "NextJS" convention to retrive routes directly as a directory-file hierarchy. Example directory structure for your routes:
 
 ```bash shell
 pages/
@@ -67,15 +14,93 @@ pages/
 
 In this structure, `[name]` and `[post]` are dynamic route parameters.
 
-## Customization
+## Features
 
-You can customize the way route parameters are replaced using the `Preset` structure. The default configuration is set to `FiberPreset`, which replaces route parameters with `:paramName` for named parameters and `*` for wildcard parameters.
+- **File System Routing**
+
+    FSRouter uses the main NextJS conventions and allows you to define dynamic route parameters using placeholders like `[param]` and `[...param]` that gets mapped to the framework syntax (e.g. `:param` and `*` for Fiber)
+
+- **Presets** 
+
+    There are already presets for [Fiber](https://github.com/gofiber/fiber) and [Chi](https://github.com/go-chi/chi)
+
+- **Simple format**
+
+    This library just reads all `**/*.html` files in a directory and parses route names using the NextJS convention into a `[]Route` slice.
+
+    ```go
+    type RouteParam struct {
+        Name   string
+        Nested bool
+    }
+
+    type Route struct {
+        Name       string
+        ParamNames []RouteParam
+
+        Path string
+    }
+    ```
+
+
+## Usage
+
+To start using FSRouter in your Go project:
+
+```bash shell
+go get -v -u github.com/aziis98/go-fsrouter
+```
+
+and import the package with
 
 ```go
-customPreset := fsrouter.Preset{
+import "github.com/aziis98/go-fsrouter"
+```
+
+### With Fiber
+
+Create an `FSRouter` and then use it to load all the routes.
+
+```go
+// ExtractParams retrives all params needed by this route from the current fiber context
+func ExtractParams(c *fiber.Ctx, route fsrouter.Route) map[string]string {
+    return route.ExtractMap(func(key string) string { return c.Params(key) })
+}
+```
+
+```go
+app := fiber.New()
+
+fsr := fsrouter.New("./pages", fsrouter.FiberPreset)
+engine := fsrouter.NewTemplateCache(true)
+
+routes, err := fsr.LoadRoutes()
+if err != nil {
+    log.Fatal(err)
+}
+
+for _, route := range routes {
+    route := route
+
+    app.Get(r.Name, func(c *fiber.Ctx) error {
+        c.Type(path.Ext(route.Path))
+        return engine.Render(ctx, 
+            path.Join(fsr.Root, route.Path), 
+            ExtractParams(c, route),
+        )
+    })
+}
+```
+
+### Custom Preset
+
+You can customize the way route parameters are replaced using the `Preset` structure, for example `FiberPreset` uses the following
+
+```go
+preset := fsrouter.Preset{
     NamedParamReplacement: ":$1",
     WildcardReplacement:   "*",
 }
 
-fsr := fsrouter.New("./path/to/your/pages", customPreset)
+fsr := fsrouter.New("./path/to/your/pages", preset)
 ```
