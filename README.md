@@ -20,10 +20,6 @@ In this structure, `[name]` and `[post]` are dynamic route parameters.
 
     FSRouter uses the main NextJS conventions and allows you to define dynamic route parameters using placeholders like `[param]` and `[...param]` that gets mapped to the framework syntax (e.g. `:param` and `*` for Fiber)
 
-- **Presets** 
-
-    There are already presets for [Fiber](https://github.com/gofiber/fiber) and [Chi](https://github.com/go-chi/chi)
-
 - **Simple format**
 
     This library just reads all `**/*.html` files in a directory and parses route names using the NextJS convention into a `[]Route` slice.
@@ -42,6 +38,9 @@ In this structure, `[name]` and `[post]` are dynamic route parameters.
     }
     ```
 
+- **Presets** 
+
+    There are already presets for [Fiber](https://github.com/gofiber/fiber) and [Chi](https://github.com/go-chi/chi)
 
 ## Usage
 
@@ -57,13 +56,52 @@ and import the package with
 import "github.com/aziis98/go-fsrouter"
 ```
 
+### With Chi
+
+Create an `FSRouter` and then use it to load all the routes.
+
+```go
+// ExtractChiParams retrives all params needed by this route from the current context
+func ExtractChiParams(r *http.Request, route fsrouter.Route) map[string]string {
+    return route.ExtractMap(func(key string) string { return chi.URLParam(r, key) })
+}
+
+```
+
+```go
+r := chi.NewRouter()
+
+fsr := fsrouter.New("./pages", fsrouter.ChiPreset)
+engine := fsrouter.NewTemplateCache(true)
+
+routes, err := fsr.LoadRoutes()
+if err != nil {
+    log.Fatal(err)
+}
+
+for _, route := range routes {
+    route := route
+
+    r.Get(route.Name, func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Content-Type", "text/html")
+        if err := engine.Render(w, 
+            path.Join(fsr.Root, route.Path), 
+            ExtractChiParams(r, route),
+        ); err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+    })
+}
+```
+
 ### With Fiber
 
 Create an `FSRouter` and then use it to load all the routes.
 
 ```go
-// ExtractParams retrives all params needed by this route from the current fiber context
-func ExtractParams(c *fiber.Ctx, route fsrouter.Route) map[string]string {
+// ExtractFiberParams retrives all params needed by this route from the current context
+func ExtractFiberParams(c *fiber.Ctx, route fsrouter.Route) map[string]string {
     return route.ExtractMap(func(key string) string { return c.Params(key) })
 }
 ```
@@ -86,7 +124,7 @@ for _, route := range routes {
         c.Type(path.Ext(route.Path))
         return engine.Render(ctx, 
             path.Join(fsr.Root, route.Path), 
-            ExtractParams(c, route),
+            ExtractFiberParams(c, route),
         )
     })
 }
@@ -97,10 +135,8 @@ for _, route := range routes {
 You can customize the way route parameters are replaced using the `Preset` structure, for example `FiberPreset` uses the following
 
 ```go
-preset := fsrouter.Preset{
+fsr := fsrouter.New("./path/to/your/pages", fsrouter.Preset{
     NamedParamReplacement: ":$1",
     WildcardReplacement:   "*",
-}
-
-fsr := fsrouter.New("./path/to/your/pages", preset)
+})
 ```
