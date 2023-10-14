@@ -55,13 +55,14 @@ for _, r := range routes {
 
 Here's an example directory structure for your routes:
 
-```
+```bash shell
 pages/
+├── dashboard/[...all].html # => /dashboard/*   (useful for SPAs)
 └── user/
-    ├── [name].html
+    ├── [name].html         # => /user/:name
     └── [name]/
         └── posts/
-            └── [post].html
+            └── [post].html # => /user/:name/posts/:post
 ```
 
 In this structure, `[name]` and `[post]` are dynamic route parameters.

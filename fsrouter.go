@@ -47,7 +47,7 @@ type Route struct {
 	ParamNames []RouteParam
 }
 
-func (r Route) ParamMap(valueFn func(param string) string) map[string]string {
+func (r Route) ExtractMap(valueFn func(param string) string) map[string]string {
 	m := map[string]string{}
 	for _, pn := range r.ParamNames {
 		m[pn.Name] = valueFn(pn.Name)

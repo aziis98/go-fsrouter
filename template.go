@@ -35,7 +35,7 @@ func (tc templateCache) loadTemplate(filePath string) (*template.Template, error
 }
 
 // Render the template for "view" into "w" with "data"
-func (tc templateCache) Render(view string, w io.Writer, data any) error {
+func (tc templateCache) Render(w io.Writer, view string, data any) error {
 	tmpl, err := tc.loadTemplate(view)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (tc templateCache) Render(view string, w io.Writer, data any) error {
 }
 
 type TemplateEngine interface {
-	Render(view string, w io.Writer, data any) error
+	Render(w io.Writer, view string, data any) error
 }
 
 func NewTemplateCache(reload bool) TemplateEngine {
