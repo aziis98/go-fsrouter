@@ -28,7 +28,7 @@ var FiberPreset = Preset{
 
 type FSRouter struct {
 	Root   string
-	Config Preset
+	Preset Preset
 }
 
 func New(rootDir string, config Preset) *FSRouter {
@@ -41,10 +41,10 @@ type RouteParam struct {
 }
 
 type Route struct {
-	Filepath string
-
 	Name       string
 	ParamNames []RouteParam
+
+	Path string
 }
 
 func (r Route) ExtractMap(valueFn func(param string) string) map[string]string {
@@ -91,15 +91,17 @@ func (fsr FSRouter) parseRoute(path string) Route {
 		})
 	}
 
+	// apply route replacement using the current preset
 	route := "/" + path
-	route = paramRegexSingle.ReplaceAllString(route, fsr.Config.NamedParamReplacement)
-	route = paramRegexNested.ReplaceAllString(route, fsr.Config.WildcardReplacement)
+	route = paramRegexSingle.ReplaceAllString(route, fsr.Preset.NamedParamReplacement)
+	route = paramRegexNested.ReplaceAllString(route, fsr.Preset.WildcardReplacement)
 
+	// apply common replacements to the url
 	if strings.HasSuffix(route, "index.html") {
 		route = strings.TrimSuffix(route, "index.html")
 	} else if strings.HasSuffix(route, ".html") {
 		route = strings.TrimSuffix(route, ".html")
 	}
 
-	return Route{route, path, paramNames}
+	return Route{route, paramNames, path}
 }
