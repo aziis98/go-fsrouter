@@ -1,6 +1,7 @@
 package fsrouter
 
 import (
+	"fmt"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -50,6 +51,20 @@ type Route struct {
 	ParamNames []RouteParam
 
 	Path string
+}
+
+func (r Route) Realize(params map[string]string) string {
+	path := r.Name
+
+	for _, pn := range r.ParamNames {
+		if pn.Nested {
+			path = strings.ReplaceAll(path, fmt.Sprintf("[...%s]", pn.Name), params[pn.Name])
+		} else {
+			path = strings.ReplaceAll(path, fmt.Sprintf("[%s]", pn.Name), params[pn.Name])
+		}
+	}
+
+	return path
 }
 
 func (r Route) ExtractMap(valueFn func(param string) string) map[string]string {
