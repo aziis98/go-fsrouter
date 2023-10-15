@@ -33,12 +33,19 @@ var ChiPreset = Preset{
 }
 
 type FSRouter struct {
-	Root   string
+	Root           string
+	IncludePattern string
+
 	Preset Preset
 }
 
-func New(rootDir string, config Preset) *FSRouter {
-	return &FSRouter{rootDir, config}
+func New(rootDir string, preset Preset) *FSRouter {
+	return &FSRouter{
+		Root:           rootDir,
+		IncludePattern: "**/*.html",
+
+		Preset: preset,
+	}
 }
 
 type RouteParam struct {
@@ -77,9 +84,7 @@ func (r Route) ExtractMap(valueFn func(param string) string) map[string]string {
 }
 
 func (fsr FSRouter) LoadRoutes() ([]Route, error) {
-	pattern := filepath.Join(fsr.Root, "**/*.html")
-
-	matches, err := zglob.Glob(pattern)
+	matches, err := zglob.Glob(filepath.Join(fsr.Root, fsr.IncludePattern))
 	if err != nil {
 		return nil, err
 	}

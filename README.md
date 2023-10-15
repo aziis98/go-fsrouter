@@ -22,7 +22,7 @@ In this structure, `[name]` and `[post]` are dynamic route parameters.
 
 - **Simple format**
 
-    This library just reads all `**/*.html` files in a directory and parses route names using the NextJS convention into a `[]Route` slice.
+    This library just reads all `**/*.html` (can be changed using `FSRouter.IncludePattern`) files in a directory and parses route names using the NextJS convention into a `[]Route` slice.
 
     ```go
     type RouteParam struct {
