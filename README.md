@@ -63,7 +63,7 @@ import "github.com/aziis98/go-fsrouter"
 Create an `FSRouter` and then use it to load all the routes.
 
 ```go
-// ExtractFiberParams retrives all params needed by this route from the current context
+// ExtractFiberParams retrieves all params needed by this route from the current context
 func ExtractFiberParams(c *fiber.Ctx, route fsrouter.Route) map[string]string {
     return route.ExtractMap(func(key string) string { return c.Params(key) })
 }
@@ -98,11 +98,10 @@ for _, route := range routes {
 Create an `FSRouter` and then use it to load all the routes.
 
 ```go
-// ExtractChiParams retrives all params needed by this route from the current context
+// ExtractChiParams retrieves all params needed by this route from the current context
 func ExtractChiParams(r *http.Request, route fsrouter.Route) map[string]string {
     return route.ExtractMap(func(key string) string { return chi.URLParam(r, key) })
 }
-
 ```
 
 ```go
@@ -142,3 +141,18 @@ fsr := fsrouter.New("./path/to/your/pages", fsrouter.Preset{
     WildcardReplacement:   "*",
 })
 ```
+
+### TemplateCache
+
+There is a small `TemplateCache` included in this project as it is fairly common to need one when using this library. It has the following API
+
+```go
+func NewTemplateCache(reload bool) TemplateEngine { ... }
+
+type TemplateEngine interface {
+    Render(w io.Writer, view string, data any) error
+}
+```
+
+The `reload` flag can be used during development to always read back from disk the templates. Template paths are relative to the current working directory.
+

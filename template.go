@@ -7,6 +7,10 @@ import (
 	"sync"
 )
 
+type TemplateEngine interface {
+	Render(w io.Writer, view string, data any) error
+}
+
 type templateCache struct {
 	// mutex
 	mu sync.RWMutex
@@ -72,8 +76,4 @@ func (tc *templateCache) Render(w io.Writer, view string, data any) error {
 	}
 
 	return err
-}
-
-type TemplateEngine interface {
-	Render(w io.Writer, view string, data any) error
 }
