@@ -1,6 +1,8 @@
 # FSRouter
 
-FSRouter is a simple **file system router library** for Go, designed to easily integrate with most http router libraries. This uses the "NextJS" convention to retrive routes directly as a directory-file hierarchy. Example directory structure for your routes:
+FSRouter is a simple **file system router library** for Go, designed to easily integrate with most http router libraries. This uses the "NextJS" convention to retrive routes directly as a directory-file hierarchy. 
+
+Example directory structure (with Fiber preset):
 
 ```bash shell
 pages/
