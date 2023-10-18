@@ -4,9 +4,13 @@ import (
 	"html/template"
 	"io"
 	"os"
+	"sync"
 )
 
 type templateCache struct {
+	// mutex
+	mu sync.RWMutex
+
 	// reload forces templates to be reloaded each time
 	reload bool
 
@@ -14,10 +18,31 @@ type templateCache struct {
 	templates map[string]*template.Template
 }
 
-func (tc templateCache) loadTemplate(filePath string) (*template.Template, error) {
-	if tmpl, ok := tc.templates[filePath]; !tc.reload && ok {
-		return tmpl, nil
+func NewTemplateCache(reload bool) TemplateEngine {
+	return &templateCache{
+		reload:    reload,
+		templates: map[string]*template.Template{},
 	}
+}
+
+func (tc *templateCache) retriveFromCache(filePath string) (*template.Template, bool) {
+	tc.mu.RLock()
+	defer tc.mu.Unlock()
+
+	if tc.reload {
+		return nil, false
+	}
+
+	if tmpl, ok := tc.templates[filePath]; ok {
+		return tmpl, true
+	}
+
+	return nil, false
+}
+
+func (tc *templateCache) loadTemplate(filePath string) (*template.Template, error) {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
 
 	content, err := os.ReadFile(filePath)
 	if err != nil {
@@ -35,22 +60,20 @@ func (tc templateCache) loadTemplate(filePath string) (*template.Template, error
 }
 
 // Render the template for "view" into "w" with "data"
-func (tc templateCache) Render(w io.Writer, view string, data any) error {
-	tmpl, err := tc.loadTemplate(view)
-	if err != nil {
-		return err
+func (tc *templateCache) Render(w io.Writer, view string, data any) error {
+	tmpl, ok := tc.retriveFromCache(view)
+	if ok {
+		return tmpl.Execute(w, data)
 	}
 
-	return tmpl.Execute(w, data)
+	tmpl, err := tc.loadTemplate(view)
+	if err == nil {
+		return tmpl.Execute(w, data)
+	}
+
+	return err
 }
 
 type TemplateEngine interface {
 	Render(w io.Writer, view string, data any) error
-}
-
-func NewTemplateCache(reload bool) TemplateEngine {
-	return templateCache{
-		reload:    reload,
-		templates: map[string]*template.Template{},
-	}
 }
