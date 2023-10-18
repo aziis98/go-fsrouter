@@ -56,7 +56,42 @@ and import the package with
 import "github.com/aziis98/go-fsrouter"
 ```
 
-### With Chi
+### With Fiber (tested)
+
+Create an `FSRouter` and then use it to load all the routes.
+
+```go
+// ExtractFiberParams retrives all params needed by this route from the current context
+func ExtractFiberParams(c *fiber.Ctx, route fsrouter.Route) map[string]string {
+    return route.ExtractMap(func(key string) string { return c.Params(key) })
+}
+```
+
+```go
+app := fiber.New()
+
+fsr := fsrouter.New("./pages", fsrouter.FiberPreset)
+engine := fsrouter.NewTemplateCache(true)
+
+routes, err := fsr.LoadRoutes()
+if err != nil {
+    log.Fatal(err)
+}
+
+for _, route := range routes {
+    route := route
+
+    app.Get(r.Name, func(c *fiber.Ctx) error {
+        c.Type(path.Ext(route.Path))
+        return engine.Render(ctx, 
+            path.Join(fsr.Root, route.Path), 
+            ExtractFiberParams(c, route),
+        )
+    })
+}
+```
+
+### With Chi (should work)
 
 Create an `FSRouter` and then use it to load all the routes.
 
@@ -91,41 +126,6 @@ for _, route := range routes {
             http.Error(w, err.Error(), http.StatusInternalServerError)
             return
         }
-    })
-}
-```
-
-### With Fiber
-
-Create an `FSRouter` and then use it to load all the routes.
-
-```go
-// ExtractFiberParams retrives all params needed by this route from the current context
-func ExtractFiberParams(c *fiber.Ctx, route fsrouter.Route) map[string]string {
-    return route.ExtractMap(func(key string) string { return c.Params(key) })
-}
-```
-
-```go
-app := fiber.New()
-
-fsr := fsrouter.New("./pages", fsrouter.FiberPreset)
-engine := fsrouter.NewTemplateCache(true)
-
-routes, err := fsr.LoadRoutes()
-if err != nil {
-    log.Fatal(err)
-}
-
-for _, route := range routes {
-    route := route
-
-    app.Get(r.Name, func(c *fiber.Ctx) error {
-        c.Type(path.Ext(route.Path))
-        return engine.Render(ctx, 
-            path.Join(fsr.Root, route.Path), 
-            ExtractFiberParams(c, route),
-        )
     })
 }
 ```
